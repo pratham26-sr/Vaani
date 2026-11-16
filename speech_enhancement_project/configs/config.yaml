@@ -1,0 +1,24 @@
+# Project Configuration
+
+data:
+  vctk_demand:
+    clean_train: data/raw/vctk_demand/clean_trainset_28spk_wav
+    noisy_train: data/raw/vctk_demand/noisy_trainset_28spk_wav
+    clean_test: data/raw/vctk_demand/clean_testset_wav
+    noisy_test: data/raw/vctk_demand/noisy_testset_wav
+  ravdess: data/raw/ravdess
+  crema_d: data/raw/crema_d/AudioWAV
+  librispeech: data/raw/librispeech/test-clean
+
+audio:
+  sample_rate: 16000
+  segment_length: 4.0  # seconds
+  n_fft: 512
+  hop_length: 256
+  n_mels: 80
+
+training:
+  batch_size: 16
+  learning_rate: 0.001
+  epochs: 50
+  device: auto  # auto, cpu, cuda, mps

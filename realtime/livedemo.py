@@ -1,14 +1,18 @@
 """
 live_demo.py  --  Real-time stage 2: live microphone -> streaming enhancement -> headphones
+                  (+ optional live speaker labels with --diar)
 
-Put next to stream_enh.py, enh_infer.py and enh_unet_best.pth, then run:
+Put next to stream_enh.py, enh_infer.py, enh_unet_best.pth, diar_stream.py and diar_worker.py, then run:
     python live_demo.py --seconds 30
+    python live_demo.py --seconds 60 --diar
 
 How it is built (2 threads, so the audio callback never waits for the model):
     audio callback (every 20 ms): copies the mic frame into in_q, and plays whatever
                                   enhanced audio is ready from the output buffer
     worker thread               : takes frames from in_q, runs ChunkedEnhancer,
                                   pushes enhanced samples to the output buffer
+    diarizer thread (--diar)    : receives a copy of every enhanced chunk, runs VAD +
+                                  speaker embeddings + online clustering, prints labels
 While it runs, press ENTER to toggle between ENHANCED and RAW mic (A/B listening).
 USE HEADPHONES, otherwise the speakers feed back into the mic.
 
@@ -70,6 +74,7 @@ class LivePipeline:
         self.bypass = False
         self.frame_ts, self.raw, self.enh_log, self.lat = [], [], [], []
         self.max_q = 0
+        self.diar = None                          # optional DiarWorker (set from main)
         self.running = threading.Event()
         self.thread = threading.Thread(target=self._worker, daemon=True)
 
@@ -85,6 +90,8 @@ class LivePipeline:
             self.out.push(y)
         if len(y):
             self.enh_log.append(y)
+            if self.diar is not None:
+                self.diar.push(y)                 # enhanced audio -> diarizer (non-blocking)
             i = min(n_before // self.block, len(self.frame_ts) - 1)
             self.lat.append(time.perf_counter() - self.frame_ts[i])  # worst case in this block
 
@@ -136,6 +143,8 @@ def main():
     ap.add_argument("--in-dev", type=int, default=None, help="input device index (default = system default)")
     ap.add_argument("--out-dev", type=int, default=None, help="output device index (default = system default)")
     ap.add_argument("--bypass", action="store_true", help="start in RAW mode")
+    ap.add_argument("--diar", action="store_true", help="enable live speaker labels")
+    ap.add_argument("--mute", action="store_true", help="silence the output (no headphones needed, no feedback)")
     args = ap.parse_args()
 
     import torch
@@ -154,6 +163,14 @@ def main():
 
     pipe = LivePipeline(enhance_fn, args.win, args.hop, args.block)
     pipe.bypass = args.bypass
+
+    dw = None
+    if args.diar:
+        from diar_worker import DiarWorker
+        dw = DiarWorker()                                # loads Silero + CAM++ before audio starts
+        pipe.diar = dw
+        print("speaker diarization ON (labels appear ~2 s after speech)")
+
     cnt = {"underruns": 0, "status": 0}
     started = [False]
 
@@ -169,6 +186,8 @@ def main():
         else:
             started[0] = True
             outdata[:] = y[:, None]
+            if args.mute:
+                outdata.fill(0)
 
     def toggler():
         while True:
@@ -193,6 +212,10 @@ def main():
     except KeyboardInterrupt:
         pass
     pipe.stop()
+    if dw is not None:
+        ev = dw.stop()
+        print(f"\n===== SPEAKERS =====\nlabels {len(ev)} | speakers found {len(dw.d.sums)} "
+              f"| dropped chunks {dw.dropped} | skipped embeddings {dw.d.bad_norm}")
     pipe.report(cnt["underruns"], cnt["status"])
     pipe.save()
 

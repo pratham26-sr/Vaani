@@ -3,7 +3,7 @@
 > A real-time system that takes noisy live microphone audio, removes the background noise with a lightweight neural network, and labels *who is speaking*, designed to run on low-cost embedded hardware (Raspberry Pi).
 
 **B.Tech Major Project, Electronics & Communication Engineering, JIIT Noida**
-**Team:** _<names>_ | **Supervisor:** _<supervisor name>_ | **Academic year:** _<year>_
+**Supervisor:** _<Dr. Pankaj Yadav>_ | **Academic year:** _<2026-27>_
 
 ---
 

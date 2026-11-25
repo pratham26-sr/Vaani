@@ -145,15 +145,10 @@ Python · PyTorch · ONNX · sherpa-onnx (CAM++) · Silero VAD · NumPy / SciPy 
 
 ## 11. Team and Acknowledgements
 
-- _<Member 1>_
-- _<Member 2>_
-- _<Member 3>_
+Priyanshu Bhardwaj 23102088
+Pratham Prabhat Srivastava 23102084
 
-**Supervisor:** _<name, designation>_
+**Supervisor:** Dr. Pankaj Yadav 
 **Institution:** Jaypee Institute of Information Technology, Noida
 
 Datasets: VCTK-DEMAND (University of Edinburgh DataShare), RAVDESS.
-
-## 12. License
-
-_<Add license, or "Academic project, all rights reserved">_

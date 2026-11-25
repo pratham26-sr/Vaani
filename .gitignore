@@ -7,3 +7,7 @@ __pycache__/
 ~$*
 
 speech_enhancement_project/data/processed/vctk_16k.zip
+realtime/models/
+venv/
+data/
+*.tar.bz2
